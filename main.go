@@ -8,8 +8,9 @@ import (
 	"net"
 )
 
-func getLineChannel(f io.ReadCloser) <-chan string {
-	out := make(chan string, 1)
+func GetLineChannel(f io.ReadCloser) <-chan string {
+	out := make(chan string, 1) //rds between the channel and the function
+
 
 	go func() {
 		defer f.Close()
@@ -20,14 +21,14 @@ func getLineChannel(f io.ReadCloser) <-chan string {
 		for {
 
 			data := make([]byte, 8)
-			n, err := f.Read(data)
+			n, err := f.Read(data) // counts the bytes in the line
 			if err != nil {
 				break
 			}
 			data = data[:n]
-			if i := bytes.IndexByte(data, '\n'); i != -1 {
-				str += string(data[:i])
-				data = data[i+1:]
+			if i := bytes.IndexByte(data, '\n'); i != -1 { // index the data while looking for the end of the line to break the line
+				str += string(data[:i]) // adds the line to the string after converting from bytes to 
+				data = data[i+1:] // beggins the new line
 				out <- str
 				str = ""
 			}
@@ -45,7 +46,7 @@ func getLineChannel(f io.ReadCloser) <-chan string {
 }
 
 func main() {
-	listener, err := net.Listener("tcp", ":42069")
+	listener, err := net.Listen("tcp", ":42069")
 
 	if err != nil {
 		log.Fatal("error", "error", err)
@@ -57,8 +58,8 @@ func main() {
 			log.Fatal("error", "error", err)
 		}
 
-		for line := range getLineChannel(conn) {
-			fmt.Printf("read: %\n", line)
+		for line := range GetLineChannel(conn) {
+			fmt.Printf("read: %s\n", line)
 
 		}
 
